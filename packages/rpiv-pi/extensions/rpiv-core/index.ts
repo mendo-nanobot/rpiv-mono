@@ -14,6 +14,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { FLAG_DEBUG } from "./constants.js";
+import { registerMissionCommands, registerMissionTool } from "./missions.js";
 import { registerBuiltInWorkflows } from "./register-built-in-workflows.js";
 import { registerSessionHooks } from "./session-hooks.js";
 import { registerSetupCommand } from "./setup-command.js";
@@ -31,6 +32,8 @@ export default function (pi: ExtensionAPI) {
 	registerSessionHooks(pi);
 	registerUpdateAgentsCommand(pi);
 	registerSetupCommand(pi);
+	registerMissionCommands(pi);
+	registerMissionTool(pi);
 	// Built-in workflows feed the sibling's `/wf` command. Deferred behind a
 	// dynamic import so a missing sibling degrades gracefully instead of taking
 	// the whole extension down (see register-built-in-workflows.ts). Fire-and-

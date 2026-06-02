@@ -21,6 +21,7 @@ Skill-based development workflow for [Pi Agent](https://github.com/badlogic/pi-m
 - **A pipeline of chained AI skills** - discover → research → design → plan → implement → validate, each producing a reviewable artifact under `.rpiv/artifacts/`.
 - **Named subagents for parallel analysis** - `codebase-analyzer`, `codebase-locator`, `codebase-pattern-finder`, `claim-verifier`, and 8 more, dispatched automatically by skills.
 - **Session lifecycle hooks** - agent profiles and guidance files install themselves on first launch.
+- **Mission mode** - `/mission-*` commands and the `mission_state` tool add Factory-style validation contracts, serial feature execution, mandatory handoffs, separate validation records, and corrective follow-up features under `.pi/missions/`.
 
 ## Prerequisites
 
@@ -99,6 +100,31 @@ On first Pi Agent session start, rpiv-pi automatically:
 
 ### Typical Workflow
 
+#### Mission mode
+
+Use mission mode for long-running work where you want a validation contract before code, serial workers, clean-context validators, and persistent handoffs:
+
+```text
+/mission-new "modernize auth flow and add e2e coverage"
+/skill:mission-orchestrator
+/mission-approve
+/mission-next
+/skill:mission-worker F-001
+/skill:mission-validator F-001
+/skill:mission-user-testing-validator F-001
+/mission-repair
+/mission-status
+```
+
+Mission state lives under `.pi/missions/<mission-id>/`:
+
+- `mission.json` — canonical state
+- `validation-contract.md` — implementation-independent definition of done
+- `handoffs/*.json` — worker handoffs with commands and exit codes
+- `validations/*.json` — scrutiny/user-testing validator records
+
+#### RPIV pipeline
+
 ```
 /skill:discover "add a /skill:fast that runs research+design+plan in one shot"
 /skill:research .rpiv/artifacts/discover/<latest>.md
@@ -148,6 +174,10 @@ Invoke via `/skill:<name>` from inside a Pi Agent session.
 | `implement` | Plan artifact | Code changes | Execute plans phase by phase |
 | `revise` | Plan artifact | Updated plan | Revise plans based on feedback |
 | `validate` | Plan artifact | Validation report | Verify plan execution |
+| `mission-orchestrator` | Active mission | `.pi/missions/<id>/validation-contract.md` + features | Scope a mission, define assertions before code, and add serial features |
+| `mission-worker` | Active feature | Code changes + handoff | Implement one feature and record commands, exit codes, issues, and assertion coverage |
+| `mission-validator` | Feature in validation | Validation record | Fresh-context scrutiny validation against contract, diff, and handoff |
+| `mission-user-testing-validator` | Feature in validation | User-testing validation record | Behavioral QA through real app/CLI/API flows with concrete evidence |
 
 #### Annotation
 
@@ -172,6 +202,13 @@ Invoke via `/skill:<name>` from inside a Pi Agent session.
 |---|---|
 | `/rpiv-setup` | Install all sibling plugins in one go |
 | `/rpiv-update-agents` | Refresh `~/.pi/agent/agents/` from bundled agent definitions and clean up legacy per-project agent directories |
+| `/mission-new <goal>` | Create a persistent mission with starter validation contract under `.pi/missions/` |
+| `/mission-status` | Show active mission progress, active feature, blockers, and latest validation |
+| `/mission-add-feature <title>` | Add a serial feature to the active mission |
+| `/mission-approve` | Approve the validation contract after replacing starter placeholders; required before work starts |
+| `/mission-next` | Mark the next pending feature in progress, blocking if prior validation failed |
+| `/mission-validate F-001` | Move a feature into validation and point the agent at validator skills |
+| `/mission-repair` | Create corrective follow-up features from failed validation records |
 | `/advisor` | Configure advisor model and reasoning effort |
 | `/btw` | Ask a side question without polluting the main conversation _(requires `@juicesharp/rpiv-btw`, opt-in)_ |
 | `/languages` | Pick the UI language for rpiv-* TUI strings (Deutsch / English / Español / Français / Português / Português (Brasil) / Русский / Українська) |
